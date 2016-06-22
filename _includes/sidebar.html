@@ -1,60 +1,55 @@
 <!-- Begin Body -->
 <div class="container">
 	<div class="row">
-  			<div class="col-md-2" id="leftCol">
+  	<div class="col-md-2" id="leftCol">
 
-                <div id="picture" style="background-image: url(http://www.naturaloil.ph/wp-content/uploads/2015/11/John_Doe.jpg)"></div>
-                <p>{{site.description}}</p>
-                <hr>
-                <div id="social-icons">
-                    <ul>
-                        <li><a href="http://facebook.com/{{ site.facebook }}"><i class="fa fa-facebook"></i></a></li>
-                        <li><a href="https://mx.linkedin.com/in/{{ site.linkedin }}"><i class="fa fa-linkedin"></i></a></li>
-                        <li><a href="http://github.com/{{ site.github }}"><i class="fa fa-github"></i></a></li>
-                        <li><a href="http://{{ site.deviantart }}.deviantart.com"><i class="fa fa-deviantart"></i></a></li>
-                        <li><a href="http://codepen.io/{{ site.codepen }}"><i class="fa fa-codepen"></i></a></li>
-                    </ul>
-                </div>
-                <hr>
+      <div id="picture" style="background-image: url(https://www.gravatar.com/avatar/d4aac135f7a190075727a9ef2bc55620?s=200)"></div>
+      <p>{{site.description}}</p>
+      <hr>
+      <div id="social-icons">
+        <ul>
+          <li><a href="https://github.com/{{ site.github }}"><i class="fa fa-github"></i></a></li>
+          <li><a href="https://mx.linkedin.com/in/{{ site.linkedin }}"><i class="fa fa-linkedin"></i></a></li>
+          <li><a href="https://facebook.com/{{ site.facebook }}"><i class="fa fa-facebook"></i></a></li>
+          <li><a href="https://plus.google.com/+{{ site.gplus }}"><i class="fa fa-google-plus" aria-hidden="true"></i></li>
+          <li><a href="https://twitter.com/{{ site.twitter }}"><i class="fa fa-twitter" aria-hidden="true"></i></li>
+        </ul>
+      </div>
+      <hr>
 
-                <div class="navigation">
-                    <ul>
-                        {% for my_page in site.pages %}
-                            {% if my_page.title %}
-                            <li><a href="{{ my_page.url | prepend: site.baseurl }}">{{ my_page.title }}</a></li>
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
-                </div>
+      <div class="navigation">
+        <ul>
+          {% for my_page in site.pages %}
+          {% if my_page.title %}
+          <li><a href="{{ my_page.url | prepend: site.baseurl }}">{{ my_page.title }}</a></li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
 
-                <hr>
+      <hr>
 
-								<div class="navigation">
-										<ul>
-												{% for category in site.categories %}
-														<li><a href="{{ my_page.url | prepend: site.baseurl }}">{{ category | first }}</a></li>
-												{% endfor %}
-										</ul>
-								</div>
+			<div class="navigation">
+				<ul>
+					{% for category in site.categories %}
+					<li><div class="navigation-sharp">#</div><a href="{{ my_page.url | prepend: site.baseurl }}">{{ category | first }}</a></li>
+					{% endfor %}
+				</ul>
+			</div>
 
-								<hr>
+			<hr>
 
-								<p>Flickr Feed<p>
-								<div id="flickr"></div>
+			<p>{{site.footer}}<p>
+			<p>Powered by Jekyll<p>
 
-								<hr>
+				<hr>
 
-								<p>{{site.footer}}<p>
-								<p>Powered by Jekyll<p>
+    </div>
 
-								<hr>
+    <div class="col-md-10 content">
 
-      		</div>
+      {{ content }}
 
-      		<div class="col-md-10 content">
-
-            {{ content }}
-
-      		</div>
-  	</div>
+    </div>
+  </div>
 </div>
