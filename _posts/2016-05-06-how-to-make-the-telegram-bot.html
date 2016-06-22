@@ -1,0 +1,243 @@
+---
+layout:   post
+title:    "How to make the Telegram bot"
+date:     2016-05-06 00:00:00 +0900
+comments: true
+category: aws, cljs, dev
+---
+
+<p>
+이 글은 AWS Lambda + Gateway에서 ClojureScript + Node.js를 사용해 텔레그램 봇을 만드는 과정을 설명한 글 입니다<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>.
+</p>
+
+<p>
+AWS를 사용한 적이 없다면 -1년간 <a href="https://aws.amazon.com/free/">공짜</a>니깐 일단- 가입하고, <br  />
+<a href="https://obviate.io/2015/08/05/tutorial-aws-api-gateway-to-lambda-to-dynamodb/">여기</a>에서 알려준대로 따라하면 AWS Lambda + Gateway 셋업이 끝납니다<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>.
+</p>
+
+<p>
+위 튜토리얼에서 사용한 <a href="https://gist.github.com/ShakataGaNai/6027b4c684c294f3fcef">자바스크립트 코드</a>가 동작하는 것을 확인 했다면, <br  />
+이제 이 코드를 CLJS로 옮겨 적고 AWS Lambda에서 잘 동작하는지 확인할 차례입니다<sup><a id="fnr.3" name="fnr.3" class="footref" href="#fn.3">3</a></sup>. <br  />
+코드가 잘 옮겨 졌으면, 마지막으로 앞서 옮겨 적은 코드를 참고해 <a href="https://github.com/ShakataGaNai/poc-telegram-bot-aws-lambda/blob/master/telegramEcho.js">텔레그램 봇: 자바스크립트 코드</a>를 CLJS로 옮겨 적습니다. <br  />
+</p>
+
+<p>
+-끝-
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> CLJS</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+먼저, 아래와 같이 템플릿으로 부터 CLJS 프로젝트를 생성 합니다.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ lein new mies pow
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> CLJS + Node.js</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+다음으로 Node.js에 맞게 프로젝트를 수정합니다.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name">./src/pow/core.cljs:</label>
+<pre class="src src-clojurescript"><span style="color: #707183;">(</span><span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">pow.core</span>
+  <span style="color: #7388D6;">(</span><span style="color: #006FE0;">:require</span> <span style="color: #909183;">[</span><span style="color: #6434A3;">cljs.nodejs</span> <span style="color: #006FE0;">:as</span> nodejs<span style="color: #909183;">]</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #6434A3;">nodejs</span>/enable-util-print<span style="font-style: italic;">!</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #0000FF;">defn</span> <span style="color: #006699; background-color: #e5eff4;">-main</span> <span style="color: #7388D6;">[</span>&amp; args<span style="color: #7388D6;">]</span>
+  <span style="color: #7388D6;">(</span>println <span style="color: #008000;">"Hello world!"</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #0000FF;">set!</span> <span style="color: #BA36A5;">*main-cli-fn*</span> -main<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name">./scripts/nodejs:</label>
+<pre class="src src-sh"><span style="color: #8D8D84;">#</span><span style="color: #8D8D84; font-style: italic;">!/bin/</span><span style="color: #0000FF;">sh</span>
+rlwrap lein trampoline run -m clojure.main scripts/nodejs.clj
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name">./scripts/nodejs.clj:</label>
+<pre class="src src-clojure"><span style="color: #707183;">(</span>require '<span style="color: #7388D6;">[</span><span style="color: #6434A3;">cljs.build.api</span> <span style="color: #006FE0;">:as</span> b<span style="color: #7388D6;">]</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span>println <span style="color: #008000;">"Building ..."</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #0000FF;">let</span> <span style="color: #7388D6;">[</span>start <span style="color: #909183;">(</span><span style="color: #6434A3;">System</span>/<span style="color: #333333; background-color: #FFFFFF;">nanoTime</span><span style="color: #909183;">)</span><span style="color: #7388D6;">]</span>
+  <span style="color: #7388D6;">(</span><span style="color: #6434A3;">b</span>/build <span style="color: #008000;">"src"</span>
+           <span style="color: #909183;">{</span><span style="color: #006FE0;">:main</span>       '<span style="color: #6434A3;">pow.core</span>
+            <span style="color: #006FE0;">:output-to</span>  <span style="color: #008000;">"out/main.js"</span>
+            <span style="color: #006FE0;">:output-dir</span> <span style="color: #008000;">"out/"</span>
+            <span style="color: #006FE0;">:target</span>     <span style="color: #006FE0;">:nodejs</span><span style="color: #909183;">}</span><span style="color: #7388D6;">)</span>
+  <span style="color: #7388D6;">(</span>println <span style="color: #008000;">"... done. Elapsed"</span> <span style="color: #909183;">(</span>/ <span style="color: #709870;">(</span>- <span style="color: #907373;">(</span><span style="color: #6434A3;">System</span>/<span style="color: #333333; background-color: #FFFFFF;">nanoTime</span><span style="color: #907373;">)</span> start<span style="color: #709870;">)</span> 1e9<span style="color: #909183;">)</span> <span style="color: #008000;">"seconds"</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+위와 같이 수정하면 아래와 같이 빌드하고 실행할 수 있습니다.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ cd pow
+$ scripts/nodejs
+$ node out/main.js
+&gt; Hello world!
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> CLJS + Node.js + AWS Lambda</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+다음으로 프로젝트를 AWS Lambda 맞도록 수정해야 합니다.
+</p>
+
+<p>
+<a href="https://obviate.io/2015/08/05/tutorial-aws-api-gateway-to-lambda-to-dynamodb/">튜토리얼</a>에서 AWS Lambda 생성할 때 Handler란에 "index.handle"라고 적었기 때문에
+index.js 파일의 export.handle에 우리의 헨들러 함수를 반환해야 합니다. <br  />
+다행히 CLJS 함수는 자바스크립트의 함수이기 때문에 CLJS 함수를 그대로 연결해도 됩니다.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name">./src/pow/core.cljs:</label>
+<pre class="src src-clojurescript"><span style="color: #707183;">(</span><span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">pow.core</span>
+  <span style="color: #7388D6;">(</span><span style="color: #006FE0;">:require</span> <span style="color: #909183;">[</span><span style="color: #6434A3;">cljs.nodejs</span> <span style="color: #006FE0;">:as</span> nodejs<span style="color: #909183;">]</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #6434A3;">nodejs</span>/enable-util-print<span style="font-style: italic;">!</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #0000FF;">defn</span> <span style="color: #006699; background-color: #e5eff4;">-main</span> <span style="color: #7388D6;">[</span>event context<span style="color: #7388D6;">]</span>
+  <span style="color: #7388D6;">(</span>println <span style="color: #909183;">(</span><span style="color: #0000FF;">.</span> <span style="color: #6434A3;">js</span>/<span style="color: #D0372D;">JSON</span> <span style="color: #709870;">(</span>stringify event<span style="color: #709870;">)</span><span style="color: #909183;">)</span><span style="color: #7388D6;">)</span>
+  <span style="color: #7388D6;">(</span>println <span style="color: #909183;">(</span><span style="color: #0000FF;">.</span> <span style="color: #6434A3;">js</span>/<span style="color: #D0372D;">JSON</span> <span style="color: #709870;">(</span>stringify context<span style="color: #709870;">)</span><span style="color: #909183;">)</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">to fake CLJS compiler</span>
+<span style="color: #707183;">(</span><span style="color: #0000FF;">defn</span> <span style="color: #006699; background-color: #e5eff4;">none</span> <span style="color: #7388D6;">[</span>&amp; _<span style="color: #7388D6;">]</span> <span style="color: #D0372D;">nil</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span><span style="color: #0000FF;">set!</span> <span style="color: #BA36A5;">*main-cli-fn*</span> none<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name">./scripts/aws-lambda:</label>
+<pre class="src src-sh"><span style="color: #8D8D84;">#</span><span style="color: #8D8D84; font-style: italic;">!/bin/</span><span style="color: #0000FF;">sh</span>
+rlwrap lein trampoline run -m clojure.main scripts/aws-lambda.clj
+<span style="color: #006FE0;">echo</span> <span style="color: #008000;">"exports.handler = pow.core._main;"</span> &gt;&gt; index.js
+rm -rf $(basename $(PWD)).zip
+zip -r $(basename $(PWD)) index.js out/ node_modules/ &gt; /dev/null
+</pre>
+</div>
+
+<p>
+코드가 많이 조잡합니다. 창피하네요. <br  />
+그래도 귀찮아서&#x2026;
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name">./scripts/aws-lambda.clj:</label>
+<pre class="src src-clojure"><span style="color: #707183;">(</span>require '<span style="color: #7388D6;">[</span><span style="color: #6434A3;">cljs.build.api</span> <span style="color: #006FE0;">:as</span> b<span style="color: #7388D6;">]</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span>println <span style="color: #008000;">"Building ..."</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #0000FF;">let</span> <span style="color: #7388D6;">[</span>start <span style="color: #909183;">(</span><span style="color: #6434A3;">System</span>/<span style="color: #333333; background-color: #FFFFFF;">nanoTime</span><span style="color: #909183;">)</span><span style="color: #7388D6;">]</span>
+  <span style="color: #7388D6;">(</span><span style="color: #6434A3;">b</span>/build <span style="color: #008000;">"src"</span>
+           <span style="color: #909183;">{</span><span style="color: #006FE0;">:main</span>       '<span style="color: #6434A3;">pow.core</span>
+            <span style="color: #006FE0;">:output-to</span>  <span style="color: #008000;">"index.js"</span>
+            <span style="color: #006FE0;">:output-dir</span> <span style="color: #008000;">"out/"</span>
+            <span style="color: #006FE0;">:target</span>     <span style="color: #006FE0;">:nodejs</span><span style="color: #909183;">}</span><span style="color: #7388D6;">)</span>
+  <span style="color: #7388D6;">(</span>println <span style="color: #008000;">"... done. Elapsed"</span> <span style="color: #909183;">(</span>/ <span style="color: #709870;">(</span>- <span style="color: #907373;">(</span><span style="color: #6434A3;">System</span>/<span style="color: #333333; background-color: #FFFFFF;">nanoTime</span><span style="color: #907373;">)</span> start<span style="color: #709870;">)</span> 1e9<span style="color: #909183;">)</span> <span style="color: #008000;">"seconds"</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ scripts/aws-lambda
+</pre>
+</div>
+
+<p>
+생성된 zip 파일을 업로드 하고, <a href="https://obviate.io/2015/08/05/tutorial-aws-api-gateway-to-lambda-to-dynamodb/">튜토리얼</a>에서 테스트 했던 것 처럼 테스트해 로그가 잘 찍히는지 확인합니다.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> CLJS + Node.js + AWS Lambda + Telegram Bot</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+끝으로 다음과 같이 봇 코드를 옮겨 적습니다.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name">./src/pow/core.cljs:</label>
+<pre class="src src-clojurescript"><span style="color: #707183;">(</span><span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">pow.core</span>
+  <span style="color: #7388D6;">(</span><span style="color: #006FE0;">:require</span> <span style="color: #909183;">[</span><span style="color: #6434A3;">cljs.nodejs</span> <span style="color: #006FE0;">:as</span> nodejs<span style="color: #909183;">]</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #6434A3;">nodejs</span>/enable-util-print<span style="font-style: italic;">!</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #0000FF;">defonce</span> <span style="color: #BA36A5;">https</span>       <span style="color: #7388D6;">(</span><span style="color: #6434A3;">nodejs</span>/require <span style="color: #008000;">"https"</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span><span style="color: #0000FF;">defonce</span> <span style="color: #BA36A5;">querystring</span> <span style="color: #7388D6;">(</span><span style="color: #6434A3;">nodejs</span>/require <span style="color: #008000;">"querystring"</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span><span style="color: #0000FF;">defn</span> <span style="color: #006699; background-color: #e5eff4;">-main</span> <span style="color: #7388D6;">[</span>event context<span style="color: #7388D6;">]</span>
+  <span style="color: #7388D6;">(</span>println <span style="color: #008000;">"Request received:"</span> <span style="color: #909183;">(</span><span style="color: #006FE0;">js-&gt;clj</span> event <span style="color: #006FE0;">:keywordize-keys</span> <span style="color: #D0372D;">true</span><span style="color: #909183;">)</span><span style="color: #7388D6;">)</span>
+  <span style="color: #7388D6;">(</span><span style="color: #0000FF;">let</span> <span style="color: #909183;">[</span>api-key <span style="color: #008000;">"YOUR-BOT-API-KEY"</span>
+        text    <span style="color: #709870;">(</span>str <span style="color: #008000;">"Hello "</span> <span style="color: #907373;">(</span><span style="color: #0000FF;">..</span> event -message -from -first_name<span style="color: #907373;">)</span> <span style="color: #008000;">", "</span>
+                     <span style="color: #008000;">"I'm ClojureScript version Bot. "</span>
+                     <span style="color: #008000;">"You said </span><span style="color: #000000; font-weight: bold;">\"</span><span style="color: #008000;">"</span> <span style="color: #907373;">(</span><span style="color: #0000FF;">..</span> event -message -text<span style="color: #907373;">)</span> <span style="color: #008000;">"</span><span style="color: #000000; font-weight: bold;">\"</span><span style="color: #008000;">."</span><span style="color: #709870;">)</span>
+        data    <span style="color: #709870;">(</span>-&gt;&gt; <span style="color: #907373;">{</span><span style="color: #006FE0;">:chat_id</span>             <span style="color: #6276BA;">(</span><span style="color: #0000FF;">..</span> event -message -from -id<span style="color: #6276BA;">)</span>
+                      <span style="color: #006FE0;">:reply_to_message_id</span> <span style="color: #6276BA;">(</span><span style="color: #0000FF;">..</span> event -message -message_id<span style="color: #6276BA;">)</span>
+                      <span style="color: #006FE0;">:text</span>                text<span style="color: #907373;">}</span>
+                     <span style="color: #907373;">(</span><span style="color: #006FE0;">clj-&gt;js</span><span style="color: #907373;">)</span>
+                     <span style="color: #907373;">(</span>.stringify querystring<span style="color: #907373;">)</span><span style="color: #709870;">)</span>
+        header  <span style="color: #709870;">(</span><span style="color: #006FE0;">clj-&gt;js</span> <span style="color: #907373;">{</span><span style="color: #006FE0;">:hostname</span> <span style="color: #008000;">"api.telegram.org"</span>
+                          <span style="color: #006FE0;">:port</span>     443
+                          <span style="color: #006FE0;">:path</span>     <span style="color: #6276BA;">(</span>str <span style="color: #008000;">"/bot"</span> api-key <span style="color: #008000;">"/sendMessage"</span><span style="color: #6276BA;">)</span>
+                          <span style="color: #006FE0;">:method</span>   <span style="color: #008000;">"POST"</span>
+                          <span style="color: #006FE0;">:headers</span>  <span style="color: #6276BA;">(</span><span style="color: #006FE0;">clj-&gt;js</span> <span style="color: #858580;">{</span><span style="color: #006FE0;">:Content-Type</span>   <span style="color: #008000;">"application/x-www-form-urlencoded"</span>
+                                              <span style="color: #006FE0;">:Content-Length</span> <span style="color: #80A880;">(</span>.-length data<span style="color: #80A880;">)</span><span style="color: #858580;">}</span><span style="color: #6276BA;">)</span><span style="color: #907373;">}</span><span style="color: #709870;">)</span>
+        request <span style="color: #709870;">(</span><span style="color: #0000FF;">.</span> https <span style="color: #907373;">(</span>request header <span style="color: #6276BA;">(</span><span style="color: #0000FF;">fn</span> <span style="color: #858580;">[</span>res<span style="color: #858580;">]</span>
+                                           <span style="color: #858580;">(</span><span style="color: #0000FF;">.</span> res <span style="color: #80A880;">(</span><span style="color: #333333; background-color: #FFFFFF;">setEncoding</span> <span style="color: #008000;">"utf8"</span><span style="color: #80A880;">)</span><span style="color: #858580;">)</span>
+                                           <span style="color: #858580;">(</span><span style="color: #0000FF;">.</span> res <span style="color: #80A880;">(</span>on <span style="color: #008000;">"data"</span> #<span style="color: #887070;">(</span>println <span style="color: #008000;">"Response:"</span> <span style="background-color: nil;">%</span><span style="color: #887070;">)</span><span style="color: #80A880;">)</span><span style="color: #858580;">)</span>
+                                           <span style="color: #858580;">(</span><span style="color: #0000FF;">.</span> res <span style="color: #80A880;">(</span>on <span style="color: #008000;">"end"</span>  #<span style="color: #887070;">(</span><span style="color: #0000FF;">.</span> context <span style="color: #707183;">(</span>succeed<span style="color: #707183;">)</span><span style="color: #887070;">)</span><span style="color: #80A880;">)</span><span style="color: #858580;">)</span><span style="color: #6276BA;">)</span><span style="color: #907373;">)</span><span style="color: #709870;">)</span><span style="color: #909183;">]</span>
+    <span style="color: #909183;">(</span><span style="color: #0000FF;">.</span> request <span style="color: #709870;">(</span>write data<span style="color: #709870;">)</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span><span style="color: #0000FF;">.</span> request <span style="color: #709870;">(</span>end<span style="color: #709870;">)</span><span style="color: #909183;">)</span><span style="color: #7388D6;">)</span>
+  <span style="color: #7388D6;">(</span>println <span style="color: #008000;">"Done."</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">to fake CLJS compiler</span>
+<span style="color: #707183;">(</span><span style="color: #0000FF;">defn</span> <span style="color: #006699; background-color: #e5eff4;">none</span> <span style="color: #7388D6;">[</span>&amp; _<span style="color: #7388D6;">]</span> <span style="color: #D0372D;">nil</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span><span style="color: #0000FF;">set!</span> <span style="color: #BA36A5;">*main-cli-fn*</span> none<span style="color: #707183;">)</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+대부분 내용은 '<a href="https://snowulf.com/2015/08/28/tutorial-poc-telegram-bot-running-in-aws-lambda/">PoC Telegram Bot running in AWS Lambda</a>'을 참조 했습니다. <br  />
+이미 봇을 만들고 글을 쓰는 거라 대강대강 설명했을 수 있습니다. :-)
+</p></div>
+
+<div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
+DB를 사용하지 않으니 안만들어도 됩니다.
+</p></div>
+
+<div class="footdef"><sup><a id="fn.3" name="fn.3" class="footnum" href="#fnr.3">3</a></sup> <p class="footpara">
+이미 AWS 람다를 위한 <a href="https://github.com/uswitch/lambada">라이브러리</a>가 있지만, 차근차근 해보고 싶어서 사용하지 않았습니다.
+</p></div>
+
+
+</div>
+</div>
