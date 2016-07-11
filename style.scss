@@ -1,8 +1,7 @@
 ---
 ---
 
-@import url(https://fonts.googleapis.com/css?family=Montserrat:400,700);
-@import url(https://cdn.rawgit.com/singihae/Webfonts/master/style.css);
+@import url(https://fonts.googleapis.com/css?family=Noto+Sans);
 
 body
 {
@@ -21,7 +20,7 @@ body
 }
 
 #leftCol p {
-    font-family: "Roboto Condensed", Arial, sans-serif;
+    font-family: "Noto Sans", "Noto Sans CJK JP", Arial, sans-serif;
     background-color: #fff;
     font-size: 13px;
     line-height: normal;
@@ -74,8 +73,7 @@ body
 
 
 .navigation a {
-
-    font-family: "Roboto Condensed", Arial, sans-serif;
+    font-family: "Noto Sans", "Noto Sans CJK JP", Arial, sans-serif;
     background-color: #fff;
     font-size: 13px;
     line-height: normal;
@@ -87,7 +85,6 @@ body
 
 a {
     font-size: 18px;
-    font-family: HelveticaNeue;
     color: rgb(130, 130, 130);
 }
 
@@ -98,7 +95,7 @@ a {
 }
 
 .content{
-        font-family: "Roboto Condensed", Arial, '배달의민족 주아', sans-serif;
+    font-family: "Noto Sans", "Noto Sans CJK JP", Arial, sans-serif;
     background-color: #fff;
     font-size: 16px;
     line-height: 1.5em;
@@ -138,7 +135,7 @@ a {
 
 .content p
 {
-    font-family: "Roboto Condensed", Arial, '배달의민족 주아', sans-serif;
+    font-family: "Noto Sans", "Noto Sans CJK JP", Arial, sans-serif;
     background-color: #fff;
     font-size: 16px;
     line-height: 24px;
@@ -148,7 +145,7 @@ a {
 
 .content a {
 
-    font-family: "Roboto Condensed", Arial, '배달의민족 주아', sans-serif;
+    font-family: "Noto Sans", "Noto Sans CJK JP", Arial, sans-serif;
     background-color: #fff;
     font-size: 16px;
     line-height: normal;
@@ -164,12 +161,13 @@ a {
     width: 70%;
 
     /* Generic font style */
-    font-family: Arial,sans-serif;
+    font-family: monospace;
     font-size: 13px;
     font-weight: normal;
     line-height: 19.2px;
     word-spacing: 0px;
-    color:#777777;
+    background-color: white;
+    border: 1px solid #c5c5c5;
 }
 
 .content img
