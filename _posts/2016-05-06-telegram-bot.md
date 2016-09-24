@@ -3,29 +3,24 @@ layout: post
 title: "How to make the Telegram bot"
 date: 2016-05-06 00:00:00 +0900
 comments: true
-category: telegram-bot
+category: tutorial
 ---
 
 이 글은 AWS Lambda + Gateway에서 ClojureScript + Node.js를 사용해 텔레그램 봇을 만드는 과정을 설명한 글 입니다[1].
 
-AWS를 사용한 적이 없다면 -1년간 [공짜](https://aws.amazon.com/free/)니깐 일단- 가입하고,<br/> 
+AWS를 사용한 적이 없다면 -1년간 [공짜](https://aws.amazon.com/free/)니깐 일단- 가입하고,  
 [여기](https://obviate.io/2015/08/05/tutorial-aws-api-gateway-to-lambda-to-dynamodb/)에서
 알려준대로 따라하면 AWS Lambda + Gateway 셋업이 끝납니다[2].
 
 위 튜토리얼에서 사용한 [자바스크립트 코드](https://gist.github.com/ShakataGaNai/6027b4c684c294f3fcef)가
-동작하는 것을 확인 했다면,<br/>
-이제 이 코드를 CLJS로 옮겨 적고 AWS Lambda에서 잘 동작하는지 확인할 차례입니다[3].<br/>
+동작하는 것을 확인 했다면,  
+이제 이 코드를 CLJS로 옮겨 적고 AWS Lambda에서 잘 동작하는지 확인할 차례입니다[3].  
 코드가 잘 옮겨 졌으면, 마지막으로 앞서 옮겨 적은 코드를 참고해
 [텔레그램 봇: 자바스크립트 코드](https://github.com/ShakataGaNai/poc-telegram-bot-aws-lambda/blob/master/telegramEcho.js)를 CLJS로 옮겨 적습니다.
 
-[1]
-대부분 내용은 '[PoC Telegram Bot running in AWS Lambda](https://snowulf.com/2015/08/28/tutorial-poc-telegram-bot-running-in-aws-lambda/)'을 참조 했습니다.<br/>
-
-[2]
-DB를 사용하지 않으니 안만들어도 됩니다.
-
-[3]
-이미 AWS 람다를 위한 [라이브러리](https://github.com/uswitch/lambada)가 있지만, 차근차근 해보고 싶어서 사용하지 않았습니다.
+[1] 대부분 내용은 '[PoC Telegram Bot running in AWS Lambda](https://snowulf.com/2015/08/28/tutorial-poc-telegram-bot-running-in-aws-lambda/)'을 참조 했습니다.  
+[2] DB를 사용하지 않으니 안만들어도 됩니다.  
+[3] 이미 AWS 람다를 위한 [라이브러리](https://github.com/uswitch/lambada)가 있지만, 차근차근 해보고 싶어서 사용하지 않았습니다.
 
 ## CLJS
 
@@ -90,8 +85,8 @@ $ node out/main.js
 다음으로 프로젝트를 AWS Lambda 맞도록 수정해야 합니다.
 
 [튜토리얼](https://obviate.io/2015/08/05/tutorial-aws-api-gateway-to-lambda-to-dynamodb/)에서
-AWS Lambda 생성할 때 Handler란에 "index.handle"라고 적었기 때문에<br/>
-index.js 파일의 export.handle에 우리의 헨들러 함수를 반환해야 합니다.<br/>
+AWS Lambda 생성할 때 Handler란에 "index.handle"라고 적었기 때문에  
+index.js 파일의 export.handle에 우리의 헨들러 함수를 반환해야 합니다.  
 다행히 CLJS의 함수는 자바스크립트의 함수와 같기 때문에 CLJS 함수를 그대로 연결해도 됩니다.
 
 ./src/pow/core.cljs:
